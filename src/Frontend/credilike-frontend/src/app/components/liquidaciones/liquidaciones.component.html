@@ -1,0 +1,112 @@
+<div class="liquidaciones-container">
+  <!-- Encabezado -->
+  <header class="header">
+    <div>
+      <h1 class="title">Gestión de Liquidaciones</h1>
+      <p class="subtitle">Plataforma SaaS Credilike — Control de Comisiones e Incentivos</p>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" (click)="cargarLiquidaciones()">
+        🔄 Actualizar
+      </button>
+    </div>
+  </header>
+
+  <!-- Filtros -->
+  <div class="filter-card">
+    <label for="estadoFilter" class="filter-label">Filtrar por Estado:</label>
+    <select
+      id="estadoFilter"
+      class="filter-select"
+      [ngModel]="selectedEstado()"
+      (ngModelChange)="onFilterChange($event)"
+    >
+      <option value="Todas">Todas las Liquidaciones</option>
+      <option value="Borrador">Borrador / Pendiente</option>
+      <option value="EnProceso">En proceso</option>
+      <option value="Aprobada">Aprobada</option>
+      <option value="Rechazada">Rechazada</option>
+    </select>
+  </div>
+
+  <!-- Estado de Carga -->
+  <div *ngIf="isLoading()" class="state-card loading-card">
+    <div class="spinner"></div>
+    <p>Cargando información de liquidaciones...</p>
+  </div>
+
+  <!-- Estado de Error -->
+  <div *ngIf="errorMessage() && !isLoading()" class="state-card error-card">
+    <span class="icon">⚠️</span>
+    <p>{{ errorMessage() }}</p>
+    <button class="btn btn-secondary" (click)="cargarLiquidaciones()">Reintentar</button>
+  </div>
+
+  <!-- Estado Vacío -->
+  <div *ngIf="!isLoading() && !errorMessage() && liquidaciones().length === 0" class="state-card empty-card">
+    <span class="icon">🔍</span>
+    <h3>No se encontraron datos</h3>
+    <p>No existen liquidaciones registradas para el filtro seleccionado.</p>
+  </div>
+
+  <!-- Tabla de Liquidaciones -->
+  <div *ngIf="!isLoading() && liquidaciones().length > 0" class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Período</th>
+          <th>Total Asesores</th>
+          <th>Monto Total</th>
+          <th>Estado</th>
+          <th>Fecha Creación</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of liquidaciones()">
+          <td class="font-mono">#{{ item.id }}</td>
+          <td class="font-bold">{{ item.periodo }}</td>
+          <td>{{ item.totalAsesores }} asesores</td>
+          <td class="font-currency">{{ item.montoTotal | currency:'COP':'symbol':'1.0-0' }}</td>
+          <td>
+            <span class="badge" [ngClass]="getStatusBadgeClass(item.estado)">
+              {{ item.estado }}
+            </span>
+          </td>
+          <td>{{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td>
+            <button
+              *ngIf="item.estado === 'Borrador' || item.estado === 'EnProceso'"
+              class="btn btn-success btn-sm"
+              (click)="aprobar(item.id)"
+            >
+              ✅ Aprobar
+            </button>
+            <span *ngIf="item.estado === 'Aprobada'" class="text-muted font-sm">
+              ✓ Finalizada
+            </span>
+            <span *ngIf="item.estado === 'Rechazada'" class="text-muted font-sm">
+              ✕ Bloqueada
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Paginación -->
+  <footer *ngIf="!isLoading() && totalPages() > 0" class="pagination-footer">
+    <span class="pagination-info">
+      Página {{ currentPage() }} de {{ totalPages() }} (Total: {{ totalRecords() }} registros)
+    </span>
+    <div class="pagination-buttons">
+      <button class="btn btn-outline" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">
+        ◀ Anterior
+      </button>
+      <button class="btn btn-outline" [disabled]="currentPage() === totalPages()" (click)="goToPage(currentPage() + 1)">
+        Siguiente ▶
+      </button>
+    </div>
+  </footer>
+</div>
